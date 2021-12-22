@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<style>
+		body {
+			text-align: center;
+		}
+	</style>
+</head>
+
+<body>
+	<canvas id="canvas" width="600" height="600"
+		style="border:2px solid #14348b;">
+		GfG 
+	</canvas>
+</body>
+
+<script>
+	const canvas = document.getElementById('canvas');
+	const board = canvas.getContext('2d');
+	let dx = 10
+	let dy = 0
+	let snek = [ {x: 200, y:200}, {x:190, y:200}, {x:180, y:200} ]
+	let foods = []
+	let score = 0
+
+	function clearBoard(){
+		board.fillStyle = 'lightblue'
+		board.fillRect(0, 0, 600, 600)
+	}
+
+	function changeDir(event){
+
+		const left = 37
+		const right = 39
+		const up = 38
+		const down = 40
+
+		const a = 65
+		const d = 68
+		const w = 87
+		const s = 83
+
+		const key = event.keyCode
+
+		if( (key === left || key === a) && dx !== 10 ){
+			dx = -10
+			dy = 0
+		}
+		else if( (key === right || key === d) && dx !== -10 ){
+			dx = 10
+			dy = 0
+		}
+		else if( (key === down || key === s) && dy !== -10 ){
+			dx = 0
+			dy = 10
+		}
+		else if( (key === up || key === w) && dy !== 10 ){
+			dx = 0
+			dy = -10
+		}
+	}
+
+	function random(min, max){
+		return Math.floor( ((Math.random() * (max-min) + min) / 10)) * 10
+	}
+
+	function genFood(){
+		foods.unshift( {x: random(0, 600), y: random(0, 600)} )
+	}
+
+	
+	document.addEventListener("keydown", changeDir)
+
+	function drawSnekPart(snekPart) {
+		board.fillStyle = 'dodgerblue'
+		//board.strokestyle = 'darkblue'
+
+		board.fillRect(snekPart.x, snekPart.y, 10, 10)
+		//boardctx.strokeRect(snekPart.x, snekPart.y, 10, 10)
+	}
+
+	function drawSnek(){
+		snek.forEach(drawSnekPart)
+	}
+
+	function drawFood(){
+		board.fillStyle = 'orangered'
+		for(let food of foods) {
+			board.fillRect(food.x, food.y, 10, 10)
+		}
+	}
+
+	function drawScore(){
+		board.fillStyle = 'black'
+		board.fillText(`SCORE: ${score}`, 0, 10)
+	}
+
+	function moveSnek(){
+		let monched = null
+		let hed = {x: snek[0].x + dx, y: snek[0].y + dy}
+		
+		if( hed.x > 600 ){
+			hed.x = 0
+		}
+		if( hed.x < 0 ){
+			hed.x = 600
+		}
+		if( hed.y > 600 ){
+			hed.y = 0
+		}
+		if( hed.y < 0 ){
+			hed.y = 600
+		}
+
+		for(let food of foods){
+			if (food.x === snek[0].x && food.y === snek[0].y){
+				monched = food
+			}
+		}
+
+		if(monched !== null){
+			foods = foods.filter( (f) => f !== monched )
+			genFood()
+			score += 10
+		} else{
+			snek.pop()
+		}
+		
+		snek.unshift(hed)
+	}
+
+	function hasEnd(){
+		for(let snk of snek.slice(1)){
+			if( snek[0].x === snk.x && snek[0].y === snk.y){
+				return true
+			}
+		}
+
+		return false
+	}
+
+	for(let i = 0; i < 3; i++ ){
+		genFood()
+	}
+	
+	let i 
+	i = setInterval( () => { 
+		moveSnek()
+		clearBoard()
+		drawSnek()
+		drawFood()
+		drawScore()
+
+		if(hasEnd()){
+			clearInterval(i)
+		}
+	}, 50)
+
+</script>
+
+</html>

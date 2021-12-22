@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas
+      id="canvas"
+      width="600"
+      height="600"
+      style="border: 2px solid black"
+    >
+      GfG
+    </canvas>
+  </body>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const board = canvas.getContext("2d");
+    let score = 0;
+    let ship = { x: 200, y: 200, direction: 0, magnitude: 0 };
+    let asteroids = [];
+    let bullets = [];
+    let keys = [
+      { press: false, code: [37, 65] }, //left
+      { press: false, code: [39, 68] }, //right
+      { press: false, code: [38, 87] }, //up
+      { press: false, code: [40, 83] }, //down
+    ];
+
+    function drawBlackScreen() {
+      board.fillStyle = "black";
+      board.fillRect(0, 0, 600, 600);
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.keyCode == 13) {
+        //enter
+        score = 0;
+        ship = { x: 200, y: 200, direction: 0, magnitude: 0 };
+        asteroids = [];
+        clearInterval(i);
+        run();
+      }
+      if (event.keyCode == 32) {
+        //space
+        shoot();
+        score -= 1;
+      }
+      for (let key of keys) {
+        if (key.code.includes(event.keyCode)) {
+          key.press = true;
+        }
+      }
+    });
+    document.addEventListener("keyup", (event) => {
+      for (let key of keys) {
+        if (key.code.includes(event.keyCode)) {
+          key.press = false;
+        }
+      }
+    });
+
+    function changeDir() {
+      if (keys[0].press) {
+        ship.direction -= 0.03;
+      }
+      if (keys[1].press) {
+        ship.direction += 0.03;
+      }
+      if (keys[2].press) {
+        ship.magnitude += 0.05;
+      }
+      if (keys[3].press) {
+        ship.magnitude -= 0.05;
+      }
+
+      ship.magnitude -= 0.01;
+
+      if (ship.magnitude < 0) {
+        ship.magnitude = 0;
+      }
+    }
+
+    function random(min, max) {
+      return Math.random() * max + min;
+    }
+
+    function genAsteroids() {
+      asteroids.unshift({
+        x: random(0, 600),
+        y: random(0, 600),
+        direction: random(0, 2 * 3.14),
+        magnitude: random(0.5, 2),
+        width: random(20, 30),
+        height: random(20, 30),
+        hasSplit: false,
+      });
+    }
+
+    function drawAsteriods() {
+      board.fillStyle = "gray";
+
+      for (let asteroid of asteroids) {
+        board.fillRect(asteroid.x, asteroid.y, asteroid.width, asteroid.height);
+      }
+    }
+
+    function moveAsteroids() {
+      asteroids.forEach((asteroid) => move(asteroid, false));
+    }
+
+    function moveShip() {
+      move(ship, false);
+    }
+
+    function moveBullets() {
+      bullets.forEach((bullet) => move(bullet, true));
+    }
+
+    function move(object, noWrap) {
+      object.x += Math.cos(object.direction) * object.magnitude;
+      object.y += Math.sin(object.direction) * object.magnitude;
+
+      if (!noWrap) {
+        if (object.x > 600) {
+          object.x = 0;
+        }
+        if (object.x < 0) {
+          object.x = 600;
+        }
+        if (object.y > 600) {
+          object.y = 0;
+        }
+        if (object.y < 0) {
+          object.y = 600;
+        }
+      }
+    }
+
+    function drawShip() {
+      board.fillStyle = "white";
+      board.save();
+      board.translate(ship.x, ship.y);
+      board.rotate(ship.direction);
+
+      board.beginPath();
+      board.moveTo(-5, -5);
+      board.lineTo(-5, 5);
+      board.lineTo(10, 0);
+      board.fill();
+
+      board.restore();
+    }
+
+    function drawBullets() {
+      board.fillStyle = "white";
+      bullets.forEach((bullet) => board.fillRect(bullet.x, bullet.y, 4, 4));
+    }
+
+    function isInBox(object, point) {
+      return (
+        object.x + object.width > point.x &&
+        point.x > object.x &&
+        object.y + object.height > point.y &&
+        point.y > object.y
+      );
+    }
+
+    function destroyed() {
+      for (let bullet of bullets) {
+        for (let asteroid of asteroids) {
+          if (isInBox(asteroid, bullet)) {
+            asteroids = asteroids.filter((a) => a !== asteroid);
+            if (!asteroid.hasSplit) {
+              asteroids.unshift(
+                {
+                  x: asteroid.x - 10,
+                  y: asteroid.y - 10,
+                  direction: asteroid.direction,
+                  magnitude: asteroid.magnitude / 2,
+                  width: asteroid.width / 2,
+                  height: asteroid.height / 2,
+                  hasSplit: true,
+                },
+                {
+                  x: asteroid.x + 10,
+                  y: asteroid.y + 10,
+                  direction: asteroid.direction,
+                  magnitude: asteroid.magnitude / 2,
+                  width: asteroid.width / 2,
+                  height: asteroid.height / 2,
+                  hasSplit: true,
+                }
+              );
+            }
+            bullets = bullets.filter((b) => b !== bullet);
+            score += 10;
+          }
+        }
+      }
+    }
+
+    function hasEnd() {
+      for (let asteroid of asteroids) {
+        if (
+          isInBox(asteroid, { x: ship.x - 5, y: ship.y - 5 }) ||
+          isInBox(asteroid, { x: ship.x - 5, y: ship.y + 5 }) ||
+          isInBox(asteroid, { x: ship.x + 10, y: ship.y })
+        ) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function drawScore() {
+      board.fillStyle = "white";
+      board.fillText(`SCORE: ${score}`, 0, 10);
+    }
+
+    function shoot() {
+      bullets.unshift({
+        x: ship.x,
+        y: ship.y,
+        direction: ship.direction,
+        magnitude: 5,
+      });
+    }
+
+    let i;
+    run();
+    function run() {
+      i = setInterval(() => {
+        drawBlackScreen();
+        drawShip();
+        moveShip();
+        changeDir();
+        moveBullets();
+        drawBullets();
+        destroyed();
+        drawScore();
+
+        if (asteroids.length < 5) {
+          genAsteroids();
+        }
+        moveAsteroids();
+        drawAsteriods();
+
+        if (hasEnd()) {
+          clearInterval(i);
+        }
+      }, 10);
+    }
+  </script>
+</html>
