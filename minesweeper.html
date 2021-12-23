@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas
+      id="canvas"
+      width="600"
+      height="600"
+      style="border: 2px solid #1b1b1b"
+    >
+    </canvas>
+  </body>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const board = canvas.getContext("2d");
+    let bombs = [];
+    let revealed = [];
+    let size = 30;
+
+    function run() {
+      drawCanvas();
+      genBombs();
+      drawBombs();
+      drawNumber();
+      drawShroud();
+      drawLines();
+    }
+    run()
+
+    function getMousePosition(canvas, event) {
+      let rect = canvas.getBoundingClientRect();
+      return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    }
+
+    canvas.addEventListener("mousedown", function (e) {
+      let mousePosition = getMousePosition(canvas, e);
+      mousePosition.x = Math.floor(mousePosition.x / size);
+      mousePosition.y = Math.floor(mousePosition.y / size);
+
+      reveal(mousePosition.x, mousePosition.y);
+
+      drawCanvas();
+      drawBombs();
+
+      drawNumber();
+      drawShroud();
+      drawLines();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.keyCode == 32) {
+        //enter
+        bombs = []
+        revealed = []
+        run();
+      }
+    });
+
+    function isBomb(x, y) {
+      for (bomb of bombs) {
+        if (x === bomb.x && y === bomb.y) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    function whatNumber(x, y) {
+      let count = 0;
+      if (isBomb(x - 1, y)) {
+        count++;
+      }
+      if (isBomb(x - 1, y - 1)) {
+        count++;
+      }
+      if (isBomb(x - 1, y + 1)) {
+        count++;
+      }
+      if (isBomb(x + 1, y)) {
+        count++;
+      }
+      if (isBomb(x + 1, y - 1)) {
+        count++;
+      }
+      if (isBomb(x + 1, y + 1)) {
+        count++;
+      }
+      if (isBomb(x, y + 1)) {
+        count++;
+      }
+      if (isBomb(x, y - 1)) {
+        count++;
+      }
+
+      return count;
+    }
+
+    function drawShroud() {
+      board.fillStyle = "#4f4f4f";
+      for (let x = 0; x < 20; x++) {
+        for (let y = 0; y < 20; y++) {
+          if (!isRevealed(x, y)) {
+            board.fillRect(x * size, y * size, size, size);
+          }
+        }
+      }
+    }
+
+    function isRevealed(x, y) {
+      for (let reveal of revealed) {
+        if (x === reveal.x && y === reveal.y) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    function reveal(x, y) {
+      if (x >= 0 && x < 20 && y >= 0 && y < 20) {
+        if (!isRevealed(x, y)) {
+          if (isBomb(x, y)) {
+            end();
+          }
+          revealed.push({ x: x, y: y });
+          if (whatNumber(x, y) === 0) {
+            reveal(x + 1, y);
+            reveal(x - 1, y);
+            reveal(x, y + 1);
+            reveal(x, y - 1);
+            reveal(x + 1, y + 1);
+            reveal(x - 1, y - 1);
+            reveal(x + 1, y - 1);
+            reveal(x - 1, y + 1);
+          }
+        }
+      }
+    }
+
+    function drawNumber() {
+      board.fillStyle = "#1b1b1b";
+      board.font = "bold 30px serif";
+      for (let x = 0; x < 20; x++) {
+        for (let y = 0; y < 20; y++) {
+          if (!isBomb(x, y) && whatNumber(x, y) !== 0) {
+            board.fillText(
+              whatNumber(x, y),
+              x * size + size / 4,
+              (y + 1) * size - size / 6
+            );
+          }
+        }
+      }
+    }
+
+    function random() {
+      return Math.floor(Math.random() * 20);
+    }
+
+    function genBombs() {
+      let numOfBombs = 0;
+      if (size === 30) {
+        numOfBombs = 60;
+      }
+
+      for (let i = 0; i < numOfBombs; i++) {
+        bombs.push({ x: random(), y: random() });
+      }
+    }
+
+    function drawBombs() {
+      for (bomb of bombs) {
+        board.fillStyle = "orangered";
+        board.fillRect(bomb.x * size, bomb.y * size, size, size);
+      }
+    }
+
+    function drawCanvas() {
+      board.fillStyle = "#8f8f8f";
+      board.fillRect(0, 0, 600, 600);
+    }
+
+    function drawLines() {
+      board.fillStyle = "#1b1b1b";
+      for (let i = 0; i < 600; i += size) {
+        board.fillRect(i, 0, 1, 600);
+        board.fillRect(0, i, 600, 1);
+      }
+    }
+
+    function end() {
+      for (let x = 0; x < 20; x++) {
+        for (let y = 0; y < 20; y++) {
+          revealed.push({ x: x, y: y });
+        }
+      }
+    }
+  </script>
+</html>
