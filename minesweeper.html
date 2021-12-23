@@ -24,8 +24,11 @@
     let bombs = [];
     let revealed = [];
     let size = 30;
+    let numOfBombs = 60
 
     function run() {
+      bombs = []
+      revealed = []
       drawCanvas();
       genBombs();
       drawBombs();
@@ -58,9 +61,21 @@
     document.addEventListener("keydown", (event) => {
       if (event.keyCode == 32) {
         //enter
-        bombs = []
-        revealed = []
+        
         run();
+      }
+      if(event.keyCode === 38){
+        if(numOfBombs < 300){
+        numOfBombs += 10
+        run()
+        }
+        
+      }
+      if(event.keyCode === 40){
+        if(numOfBombs > 10){
+        numOfBombs -= 10
+        run()
+        }
       }
     });
 
@@ -167,11 +182,6 @@
     }
 
     function genBombs() {
-      let numOfBombs = 0;
-      if (size === 30) {
-        numOfBombs = 60;
-      }
-
       for (let i = 0; i < numOfBombs; i++) {
         bombs.push({ x: random(), y: random() });
       }
