@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas
+      id="canvas"
+      width="800"
+      height="600"
+      style="border: 2px solid black"
+    >
+    </canvas>
+  </body>
+  <script>
+    const canvas = document.getElementById("canvas");
+    const board = canvas.getContext("2d");
+    let egg = {
+      x: 200,
+      y: 450,
+      width: 40,
+      height: 50,
+      velocity: 0,
+      grounded: true,
+      health: 100,
+    };
+    let bacon = { x: 400, y: 300, width: 60, height: 200 };
+    let baconbits = [];
+    let keys = [
+      { press: false, code: [37, 65] }, //left
+      { press: false, code: [39, 68] }, //right
+      { press: false, code: [32] }, //space
+    ];
+
+    document.addEventListener("keydown", (event) => {
+      for (let key of keys) {
+        if (key.code.includes(event.keyCode)) {
+          key.press = true;
+        }
+        if (event.keyCode == 13) {
+          //enter
+          egg.health = 100;
+          egg.x = 200;
+          egg.y = 450;
+          baconbits = [];
+          clearInterval(i);
+          run();
+        }
+      }
+    });
+
+    document.addEventListener("keyup", (event) => {
+      for (let key of keys) {
+        if (key.code.includes(event.keyCode)) {
+          key.press = false;
+        }
+      }
+    });
+
+    function randomSpeed(min, max, direction) {
+      if (direction == "left") {
+        return -(Math.random() * max + min);
+      } else {
+        return Math.random() * max + min;
+      }
+    }
+
+    function randomY() {
+      return Math.random() * 200 + bacon.y;
+    }
+
+    function isBitsHit() {
+      for (let bits of baconbits) {
+        if (isInBox(egg, bits)) {
+          Object.assign(bits, genBaconbits());
+          egg.health -= 5;
+        }
+      }
+    }
+
+    function isInBox(object, point) {
+      return (
+        object.x + object.width - 5 > point.x &&
+        point.x > object.x - object.width &&
+        object.y + object.height > point.y &&
+        point.y > object.y - object.height - 10
+      );
+    }
+
+    function isTouchBacon(){
+      if(isInBox(egg, bacon)){
+        return true
+      } else {
+        return false
+      }
+    }
+
+    function whereEgg() {
+      if (egg.x < bacon.x) {
+        return "left";
+      } else {
+        return "right";
+      }
+    }
+
+    function genBaconbits() {
+      return {
+        x: bacon.x,
+        y: randomY(),
+        speed: randomSpeed(1, 1.5, whereEgg()),
+        width: 20,
+        height: 10,
+      };
+    }
+
+    function moveEgg() {
+      egg.grounded = egg.y == 450;
+
+      if (egg.grounded) {
+        egg.velocity = 0;
+      }
+
+      if (keys[0].press) {
+        if (egg.x - 40 != 0) {
+          egg.x -= 5;
+        }
+      }
+
+      if (keys[1].press) {
+        if (egg.x + 40 != 800) {
+          egg.x += 5;
+        }
+      }
+
+      if (egg.grounded && keys[2].press) {
+        egg.velocity = 20;
+      }
+
+      egg.y -= egg.velocity--;
+    }
+
+    function moveBaconbits() {
+      for (let bits of baconbits) {
+        bits.x += bits.speed;
+        if (bits.x <= -50 || bits.x >= 850) {
+          Object.assign(bits, genBaconbits());
+        }
+      }
+    }
+
+    function createBoard() {
+      board.fillStyle = "black";
+      board.fillRect(0, 0, 800, 600);
+    }
+
+    function createFloor() {
+      board.fillStyle = "purple";
+      board.fillRect(0, 500, 800, 600);
+    }
+
+    function createEgg(x, y) {
+      let eggColor = "";
+      if (egg.health >= 80) {
+        eggColor = "white";
+      } else if (egg.health >= 50) {
+        eggColor = "yellow";
+      } else if (egg.health >= 30) {
+        eggColor = "red";
+      } else {
+        eggColor = "brown";
+      }
+
+      board.fillStyle = eggColor;
+
+      board.save();
+      board.translate(x, y);
+
+      board.beginPath();
+      board.moveTo(0, 50);
+
+      for (let i = 0; i < Math.PI * 2; i += (Math.PI * 2) / 100) {
+        board.lineTo(Math.sin(i) * 40, Math.cos(i) * 50);
+      }
+
+      board.fill();
+      board.beginPath();
+      board.moveTo(0, 20);
+
+      board.fillStyle = "orange";
+      for (let i = 0; i < Math.PI * 2; i += (Math.PI * 2) / 100) {
+        board.lineTo(Math.sin(i) * 20, Math.cos(i) * 20 - 10);
+      }
+      board.fill();
+
+      board.restore();
+    }
+
+    function createBacon(x, y) {
+      board.fillStyle = "pink";
+      board.fillRect(x, y, 10, 200);
+      board.fillStyle = "maroon";
+      board.fillRect(x + 5, y, 60, 200);
+      board.fillStyle = "pink";
+      board.fillRect(x + 35, y, 20, 200);
+    }
+
+    function drawBaconbits() {
+      board.fillStyle = "maroon";
+
+      for (let bits of baconbits) {
+        board.fillRect(bits.x, bits.y, bits.width, bits.height);
+      }
+      board.fillStyle = "pink";
+      for (let bits of baconbits) {
+        board.fillRect(
+          bits.x + bits.width,
+          bits.y,
+          bits.width / 2,
+          bits.height
+        );
+      }
+    }
+
+    function hasEnd() {
+      return egg.health <= 0;
+    }
+
+    function drawScore() {
+      board.fillStyle = "white";
+      board.fillText(`Health: ${egg.health}`, 0, 10);
+    }
+
+    let i;
+    run();
+    function run() {
+      i = setInterval(() => {
+        createBoard();
+        moveEgg();
+        createEgg(egg.x, egg.y);
+        createFloor();
+
+        if (baconbits.length < 4) {
+          baconbits.push(genBaconbits());
+        }
+        moveBaconbits();
+        isBitsHit();
+        drawBaconbits();
+        createBacon(bacon.x, bacon.y);
+        drawScore();
+
+        if (hasEnd()) {
+          clearInterval(i);
+        }
+      }, 10);
+    }
+  </script>
+</html>

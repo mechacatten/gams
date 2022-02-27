@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas
+      id="canvas"
+      width="600"
+      height="400"
+      style="border: 2px solid black"
+    >
+    </canvas>
+  </body>
+  <script>
+    const canvas = document.getElementById("canvas");
+    const board = canvas.getContext("2d");
+    const keys = [
+      { type: "left", code: [37, 65] }, //left
+      { code: [39, 68] }, //right
+      { code: [38, 87] }, //up
+      { code: [40, 83] }, //down
+      { code: [13] }, //enter
+      { code: [32] }, //space
+    ];
+    let keysPressed = [];
+    let scale = 20;
+    let things = [];
+
+    document.addEventListener("keydown", (event) => {
+      for (let key of keys) {
+        if (
+          key.code.includes(event.keyCode) &&
+          !keysPressed.includes(event.keyCode)
+        ) {
+          keysPressed.push("left");
+        }
+      }
+    });
+
+    document.addEventListener("keyup", (event) => {
+      for (let key of keys) {
+        if (key.code.includes(event.keyCode)) {
+          key.press = false;
+        }
+      }
+    });
+
+    function move(thing){
+
+    }
+
+    function moveYou(you){
+
+    }
+
+    function drawBoard() {
+      board.fillStyle = "#000019";
+      board.fillRect(0, 0, 800, 600);
+    }
+
+    function pushThing(direction, position) {}
+
+    function createThing(x, y, type) {
+      things.push({ type: type, position: { x: x, y: y } });
+    }
+
+    function drawThings() {
+      for (let thing of things) {
+        if (thing.type == "bacon") {
+          drawBacon(thing);
+        } else if (thing.type == "egg") {
+          drawEgg(thing);
+        }
+      }
+    }
+
+    function drawBacon(bacon) {
+      board.fillStyle = "maroon";
+      board.fillRect(
+        bacon.position.x * scale,
+        bacon.position.y * scale,
+        scale,
+        scale
+      );
+      board.fillStyle = "pink";
+      board.fillRect(
+        bacon.position.x * scale,
+        bacon.position.y * scale,
+        scale / 4,
+        scale
+      );
+      board.fillRect(
+        bacon.position.x * scale + 10,
+        bacon.position.y * scale,
+        scale / 4,
+        scale
+      );
+    }
+
+    function drawEgg(egg) {
+      board.fillStyle = "white";
+      board.fillRect(egg.position.x * scale, egg.position.y * scale, scale, scale);
+
+      board.fillStyle = "orange";
+      board.fillRect(
+        egg.position.x * scale + scale / 4,
+        egg.position.y * scale + scale / 4,
+        scale / 2,
+        scale / 2
+      );
+    }
+
+    createThing(5, 10, "bacon");
+    createThing(10, 10, "egg");
+
+    let i;
+    run();
+    function run() {
+      i = setInterval(() => {
+        drawBoard();
+        drawThings();
+      }, 10);
+    }
+  </script>
+</html>

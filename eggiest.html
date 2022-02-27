@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas
+      id="canvas"
+      width="600"
+      height="600"
+      style="border: 2px solid black"
+    >
+    </canvas>
+  </body>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const board = canvas.getContext("2d");
+    const scale = 40;
+
+    const factorial = ((f) => ((x) => f(() => x(x)))((x) => f(() => x(x))))(
+      (factorial) => (x) => x == 0 ? 1 : x * factorial()(x - 1)
+    );
+
+    let egg = {
+      x: 0,
+      y: 0,
+      velocity: 0,
+      grounded: true,
+    };
+    let bacon = [];
+    let keys = [
+      { press: false, code: [37, 65] }, //left
+      { press: false, code: [39, 68] }, //right
+      { press: false, code: [32] }, //space
+    ];
+    let platforms = [{ x: egg.x, y: egg.y + scale }];
+
+    document.addEventListener("keydown", (event) => {
+      for (let key of keys) {
+        if (key.code.includes(event.keyCode)) {
+          key.press = true;
+        }
+        if (event.keyCode == 13) {
+          //enter
+        }
+      }
+    });
+
+    document.addEventListener("keyup", (event) => {
+      for (let key of keys) {
+        if (key.code.includes(event.keyCode)) {
+          key.press = false;
+        }
+      }
+    });
+
+    function moveEgg() {
+      egg.grounded = false;
+      for (let platform of platforms) {
+        if (
+          isInBox(platform, { x: egg.x, y: egg.y + scale }) ||
+          isInBox(platform, { x: egg.x + scale, y: egg.y + scale })
+        ) {
+          egg.grounded = true;
+        }
+      }
+
+      if (egg.grounded) {
+        egg.velocity = 0;
+      }
+
+      if (keys[0].press) {
+        egg.x -= 2;
+      }
+
+      if (keys[1].press) {
+        egg.x += 2;
+      }
+      if (egg.grounded && keys[2].press) {
+        egg.velocity = 5;
+      }
+      egg.y -= egg.velocity;
+      egg.velocity -= 1 / 10;
+    }
+
+    function isInBox(object, point) {
+      return (
+        object.x < point.x &&
+        object.x + scale > point.x &&
+        object.y < point.y &&
+        object.y + scale/2 > point.y
+      );
+    }
+
+    function random(max) {
+      return Math.random() * max;
+    }
+
+    function genPlatforms() {
+      for (let i = 600; i > -1000; i -= 100) {
+        for (let j = 0; j < 3; j++) {
+          platforms.push({ x: random(600) - 300, y: i - random(100) });
+        }
+      }
+    }
+
+    function genBacon() {
+      bacon.push({
+        x: 200,
+        y: 200,
+      });
+    }
+
+    function drawPlatforms() {
+      board.fillStyle = "green";
+      for (let platform of platforms) {
+        board.fillRect(
+          platform.x - egg.x + 300 - scale / 2,
+          platform.y - egg.y + 300 - scale / 2,
+          scale * 2,
+          scale / 2
+        );
+      }
+    }
+
+    function drawBacon() {
+      for (let bit of bacon) {
+        board.fillStyle = "maroon";
+        board.fillRect(
+          bit.x - egg.x + 300 - scale / 2,
+          bit.y - egg.y + 300 - scale / 2,
+          scale,
+          scale
+        );
+        board.fillStyle = "pink";
+        board.fillRect(
+          bit.x - egg.x + 300 - scale / 2,
+          bit.y - egg.y + 300 - scale / 2,
+          scale / 4,
+          scale
+        );
+        board.fillRect(
+          bit.x - egg.x + scale / 2 + 300 - scale / 2,
+          bit.y - egg.y + 300 - scale / 2,
+          scale / 4,
+          scale
+        );
+      }
+    }
+
+    function drawEgg() {
+      board.fillStyle = "white";
+      board.fillRect(
+        egg.x - egg.x + 300 - scale / 2,
+        egg.y - egg.y + 300 - scale / 2,
+        scale,
+        scale
+      );
+
+      board.fillStyle = "orange";
+      board.fillRect(
+        egg.x - egg.x + scale / 4 + 300 - scale / 2,
+        egg.y - egg.y + scale / 4 + 300 - scale / 2,
+        scale / 2,
+        scale / 2
+      );
+    }
+
+    function drawBoard() {
+      board.fillStyle = "#000019";
+      board.fillRect(0, 0, 800, 600);
+    }
+
+    function hasEnd() {
+      return egg.y > 1500;
+    }
+
+    genBacon();
+    genPlatforms();
+
+    let i;
+    run();
+    function run() {
+      i = setInterval(() => {
+        drawBoard();
+        drawPlatforms();
+        moveEgg();
+        drawEgg();
+        drawBacon();
+
+        if (hasEnd()) {
+          egg.x = 0;
+          egg.y = 0;
+          egg.velocity = 0;
+        }
+      }, 10);
+    }
+  </script>
+</html>
